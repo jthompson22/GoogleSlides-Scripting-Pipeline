@@ -14,12 +14,13 @@ import Read_Data
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 # The ID of a sample presentation.
-PRESENTATION_ID = '16nmnFPBu4cN8EzRBleeT7oNRbijAhH4cD0NAt2b3dFU'
+master_folder_ID = '1zMrdfLBZdtuGpEq1oE_hGyRkwU9BXARw'
 template_presentation_id = '16nmnFPBu4cN8EzRBleeT7oNRbijAhH4cD0NAt2b3dFU'
+archive_folder_ID = '1AwJA-CqCUSFxbVy8pYaM8RxnZNW_05dP'
 
 def main():
     
-    '''creds = None
+    creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
@@ -61,19 +62,19 @@ def main():
     presentation_copy_id = drive_response.get('id')
 
 
-'''#update the copied presentation
+#update the copied presentation
 
     
     sheet1, sheet2 = Read_Data.Get_Data()
     #sheet1 data
     check1, rnd1, add1 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 1']]
     check2, rnd2, add2 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 2']]
-    check3, rnd3, add3 = [str("{:.2f}".format(x)) for x in sheet1['Fund 3']]
+    check3, rnd3, add3 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 3']]
     #sheet2 data
-    grossROIC, netTVPI, gradRate, netIRR = [str("{:.2f}".format(x)) for x in sheet2['A']]
+    grossROIC, netTVPI, gradRate, netIRR = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet2['A']]
     print(grossROIC, netIRR,  netTVPI, gradRate)
     print(check2, rnd2, add2)
-    '''
+    
     requests = [
         {
             'replaceAllText': {
@@ -209,6 +210,6 @@ def main():
     #print('Created presentation for %s with ID: %s' %
      #   (customer_name, presentation_copy_id))
     #print('Replaced %d text instances' % num_replacements)
-'''
+
 if __name__ == '__main__':
     main()
