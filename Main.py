@@ -4,6 +4,7 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from apiclient.http import MediaFileUpload
 from datetime import date
 import os
 import pandas as pd
@@ -24,9 +25,9 @@ def main():
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    #if os.path.exists('token.pickle'):
-       # with open('token.pickle', 'rb') as token:
-            #creds = pickle.load(token)
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -45,15 +46,15 @@ def main():
 
 
 #------------------------------------------------------
-    #Call the Slides API // might need to update this
+    #Call the Slides API // 
     presentation = service.presentations().get(
         presentationId='16nmnFPBu4cN8EzRBleeT7oNRbijAhH4cD0NAt2b3dFU').execute()
     slides = presentation.get('slides')
 
     
-#Create a copy of the presentation_add_date and Name
+    #Create a copy of the presentation_add_date and Name
     today = date.today()
-    copy_title =  today.strftime("%b-%d-%Y") + 'Fund3-Deck'
+    copy_title =  'Fund 3 Deck: Updated-' + today.strftime("%b-%d-%Y") 
     body = {
         'name': copy_title
     }
@@ -62,20 +63,68 @@ def main():
     presentation_copy_id = drive_response.get('id')
 
 
+    '''folder_response = drive_service.files().list(q= "name contains 'Fund 3 Deck: Updated'",
+                                            spaces='Master-Script',
+                                            fields='nextPageToken, files(id, name)').execute()
+    for file in folder_response.get('files', []):
+    # Process change
+        print('Found file: %s (%s)' % (file.get('name'), file.get('id')))'''
+
+
+    #Create an Archive Folder and Save the ID
+    file_metadata = {
+        'name': 'Archived Data: ' + today.strftime("%b-%d-%Y"),
+        'mimeType': 'application/vnd.google-apps.folder',
+        'parents' : ['1AwJA-CqCUSFxbVy8pYaM8RxnZNW_05dP']
+    }
+    our_file = drive_service.files().create(body=file_metadata,
+                                    fields='id').execute()
+    folder_id = our_file.get('id')
+
+    #upload Excel Document
+    file_metadata = {'name': 'data.xlsx', 'parents': [folder_id]}
+    media = MediaFileUpload('data.xlsx',
+                        mimetype='image/jpeg')
+    excel_file = drive_service.files().create(body=file_metadata,
+                                    media_body=media,
+                                    fields='id').execute()
+    excel_id = excel_file.get('id')
+
+
+
 #update the copied presentation
 
+
     
-    sheet1, sheet2 = Read_Data.Get_Data()
+    '''items = Read_Data.Get_Data()
     #sheet1 data
-    check1, rnd1, add1 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 1']]
-    check2, rnd2, add2 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 2']]
-    check3, rnd3, add3 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 3']]
+    #check1, rnd1, add1 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 1']]
+    #check2, rnd2, add2 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 2']]
+    #check3, rnd3, add3 = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet1['Fund 3']]
     #sheet2 data
-    grossROIC, netTVPI, gradRate, netIRR = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet2['A']]
-    print(grossROIC, netIRR,  netTVPI, gradRate)
-    print(check2, rnd2, add2)
+    #grossROIC, netTVPI, gradRate, netIRR = [str("{:.2f}".format(x)) if '.' in str(x) else str(x) for x in sheet2['A']]
+    #print(grossROIC, netIRR,  netTVPI, gradRate)
+    #print(check2, rnd2, add2)
     
-    requests = [
+    for key in items:
+        requests = [
+            {
+                'replaceAllText': {
+                    'containsText': {
+                        'text': key,
+                        'matchCase': True
+                    },
+                    'replaceText': items[key]
+                }
+            }
+        ]
+        body = {
+        'requests': requests
+        }
+        response = service.presentations().batchUpdate(
+            presentationId=presentation_copy_id, body=body).execute()'''
+
+    '''requests = [
         {
             'replaceAllText': {
                 'containsText': {
@@ -194,14 +243,14 @@ def main():
             }
         }
 
-    ]
+    ]'''
 
-    body = {
+    '''body = {
         'requests': requests
     }
     
     response = service.presentations().batchUpdate(
-        presentationId=presentation_copy_id, body=body).execute()
+        presentationId=presentation_copy_id, body=body).execute()'''
     
    # num_replacements = 0
     #for reply in response.get('replies'):
