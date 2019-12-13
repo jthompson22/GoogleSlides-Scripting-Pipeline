@@ -89,7 +89,7 @@ def Get_Data():
     #our_list = [x for x in sheet1['1']]
     #print(our_list)
 
-    our_list = ['number-1', 'money-2', 'text-1', 'percent']
+    '''our_list = ['number-1', 'money-2', 'text-1', 'percent']
     money = 'money-2'
     text = 'text-1'
     percent = 'percent'
@@ -97,14 +97,7 @@ def Get_Data():
     number = re.search('[0-9]', our_list[1]).group(0)
     test = f'${test:,.{number}f}'
     print(number)
-    print(test)
-
-    #y = str("{:,.{number}f}".format(test))
-    #print(y)
-    
-
-
-
+    print(test)'''
     
     ser = pd.Series(sheet1['tagName']) 
     values = pd.Series(sheet1['value'])
