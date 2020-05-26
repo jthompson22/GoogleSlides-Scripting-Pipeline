@@ -13,8 +13,9 @@ import pandas as pd
 import numpy 
 import re
 import json
+import time
 from urllib.error import HTTPError
-
+import json
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -101,7 +102,6 @@ def get_data():
                 val = f'${values[x]:,.{format_variable}f}'
                 val = str(val)
                 items["{{" + ser[x] + "}}"] = val
-            
 
     for value in items:
         print(value, items[value])
@@ -111,12 +111,20 @@ def get_data():
 #______________________end of GET DATA method_____________________________________________
 
 
+def jsonDUMPER(items):
+    jsonDUMP = []
+    for key in items:
+        jsonDUMP.append({'replaceAllText': {'containsText': {'text': key,'matchCase': True},'replaceText': items[key]}})
+
+    #print(jsonDUMP)
+    return jsonDUMP
+
 
 #______Main Method sends data up to the Google Drive server
-def main(items):
+def main(items, jsonDUMP):
 #Get path for exectuable or script
     if getattr(sys, 'frozen', False):
-        print("EXECUTABLE")
+        print("EXECUTION TYPE: EXECUTABLE")
         application_path_excel = os.path.dirname(sys.executable) + "/"
         application_path_json_folder = os.path.dirname(sys.executable) + "/folder_data.json"
         application_path_json= os.path.dirname(sys.executable) + "/credentials.json"
@@ -126,7 +134,7 @@ def main(items):
                 excel_document = application_path_excel + x.name 
                 excel_name = x.name
     elif __file__:
-        print("SCRIPT")
+        print("EXECUTION TYPE: SCRIPT")
         application_path_json_folder = os.path.dirname(__file__) + "folder_data.json"
         application_path_json = os.path.dirname(__file__) + "credentials.json"
         application_path_excel = os.path.dirname(__file__) 
@@ -192,7 +200,7 @@ def main(items):
         fileId=portfolio_template_id, body=body).execute()
     portfolio_copy_id = drive_response_port.get('id')
 
-    print("PASSINGD DATA UP TO THE SERVER")
+    print("PASSING DATA UP TO THE SERVER")
 #______________________________________________________________
  #Create an Archive Folder and Save the ID
     file_metadata = {
@@ -214,9 +222,13 @@ def main(items):
     excel_id = excel_file.get('id')
     #os.remove(excel_document)
 #______________________________________________________________
-#Send request-------------------    
-    try:
-        for key in items:
+#Send request-------------------  
+    request_num = 0
+    body = {'requests': jsonDUMP}
+    response = service.presentations().batchUpdate(
+                presentationId=presentation_copy_id, body=body).execute()
+    '''for key in items:
+        try:
             requests = [
                 {
                     'replaceAllText': {
@@ -233,28 +245,38 @@ def main(items):
             }
             response = service.presentations().batchUpdate(
                 presentationId=presentation_copy_id, body=body).execute()
-            
-            
-            '''portfolio_response = service.presentations().batchUpdate(
+            time.sleep(1)
+            request_num+=1
+            print("HELLO")
+            print(request_num)
+        except:
+            print("We have exceeded Google's quota for API requests. Going to hangout of 100 seconds")
+            time.sleep(110) 
+            #Rebuild API
+            service = build('slides', 'v1', credentials=creds)
+            drive_service = build('drive', 'v3', credentials=creds)
+            response = service.presentations().batchUpdate(
+                presentationId=presentation_copy_id, body=body).execute()
+            request_num+=1
+            print(request_num)
+            portfolio_response = service.presentations().batchUpdate(
                 presentationId=portfolio_copy_id, body=body).execute()'''
 
-            num_replacements = 0
     #______________________________________________________________
     #move the copied and updated presentation into an archive folder
-        file = drive_service.files().update(fileId=presentation_copy_id, 
-                                    addParents=folder_id,
-                                    removeParents=json_document["drive_id"]["master_folder"],
-                                    fields='id, parents').execute()
-        file = drive_service.files().update(fileId=portfolio_copy_id, 
-                                    addParents=folder_id,
-                                    removeParents=json_document["drive_id"]["master_folder"],
-                                    fields='id, parents').execute()
-    except(HTTPError):
-        print("We have exceeded Google's quota for API requests. Going to hangout of 100 seconds")
-        time.sleep(100)
 
+
+    file = drive_service.files().update(fileId=presentation_copy_id, 
+                                addParents=folder_id,
+                                removeParents=json_document["drive_id"]["master_folder"],
+                                fields='id, parents').execute()
+    file = drive_service.files().update(fileId=portfolio_copy_id, 
+                                addParents=folder_id,
+                                removeParents=json_document["drive_id"]["master_folder"],
+                                fields='id, parents').execute()
 #______________________________________________________________
     print("UPDATED")
 if __name__ == '__main__':
     data = get_data()
-    main(data)
+    jsonDUMP = jsonDUMPER(data)
+    main(data, jsonDUMP)
